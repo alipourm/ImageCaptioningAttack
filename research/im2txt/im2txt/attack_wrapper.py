@@ -55,15 +55,20 @@ class AttackWrapper(inference_wrapper_base.InferenceWrapperBase):
             "input_mask:0": mask_feed,
             "image_raw_feed:0": image_raw_feed
         })
-    print(grads)
+    # print(grads)
+    print(target_cross_entropy_losses)
     return math.exp(-np.sum(target_cross_entropy_losses))
 
   # input feed, mask_feed and image_feed are tensors
   # returns a tensor
   def predict(self, sess, input_feed, mask_feed, image_raw_feed):
-    model_graph_def = sess.graph.as_graph_def()
+    # model_graph_def = sess.graph.as_graph_def()
+    # model_meta_graph = tf.train.export_meta_graph(clear_extraneous_savers = True)
+    model_meta_graph = tf.train.export_meta_graph()
+    """
     frozen_model_graph_def = graph_util.convert_variables_to_constants(sess,
-            model_graph_def,
+            # model_graph_def,
+            model_meta_graph.graph_def,
             ["softmax_and_cross_entropy/softmax_and_cross_entropy"])
     sum_log_probs = tf.import_graph_def(
             frozen_model_graph_def,
@@ -73,6 +78,16 @@ class AttackWrapper(inference_wrapper_base.InferenceWrapperBase):
               "image_raw_feed:0": image_raw_feed
               },
             return_elements=[self.model.target_cross_entropy_losses.name])
+    """
+    saver = tf.train.import_meta_graph(
+            model_meta_graph,
+            import_scope="import",
+            input_map={
+              "input_feed:0": input_feed,
+              "input_mask:0": mask_feed,
+              "image_raw_feed:0": image_raw_feed
+              })
+    sum_log_probs = sess.graph.get_tensor_by_name("import/softmax_and_cross_entropy/softmax_and_cross_entropy:0")
     return sum_log_probs
 
   '''

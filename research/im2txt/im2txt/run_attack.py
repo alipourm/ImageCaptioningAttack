@@ -99,7 +99,7 @@ def main(_):
       mask_placeholder = tf.placeholder(dtype=tf.int64,shape=[None,None])
       endpoint = model.predict(sess, caption_placeholder, mask_placeholder, raw_image_placeholder)
       grad_op = tf.gradients(endpoint, raw_image_placeholder)
-      grads, log_probs = sess.run(grad_op, endpoint, 
+      grads, log_probs = sess.run([grad_op, endpoint], 
               feed_dict={
                   caption_placeholder: new_caption,
                   mask_placeholder: new_mask,
